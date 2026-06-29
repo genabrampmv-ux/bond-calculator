@@ -59,6 +59,14 @@
 </div>
 
 <script>
+// Безопасный обход блокировок через надежный публичный шлюз
+const fetchMoexData = async (url) => {
+    const response = await fetch(`https://allorigins.win{encodeURIComponent(url)}`);
+    if (!response.ok) throw new Error('Ошибка связи с сервером');
+    const wrapper = await response.json();
+    return JSON.parse(wrapper.contents);
+};
+
 async function fetchBondData() {
     const isin = document.getElementById('isinInput').value.trim().toUpperCase();
     const loader = document.getElementById('loader');
@@ -72,17 +80,11 @@ async function fetchBondData() {
     resultsDiv.style.display = 'none';
 
     try {
-        // Переключаемся на альтернативный стабильный прокси-сервер
-        const proxy = "https://freeboard.io";
+        // 1. Получаем паспорт облигации
+        const data = await fetchMoexData(`https://moex.com{isin}.json?iss.meta=off`);
         
-        // 1. Запрос параметров облигации
-        const url1 = `${proxy}${encodeURIComponent(`https://moex.com{isin}.json?iss.meta=off`)}`;
-        const response = await fetch(url1);
-        if (!response.ok) throw new Error('Не удалось подключиться к серверу ценных бумаг через шлюз');
-        const data = await response.json();
-        
-        if (!data.securities || !data.securities.data || data.securities.data.length === 0) {
-            throw new Error('Облигация не найдена на MOEX. Проверьте правильность ISIN.');
+        if (!data || !data.securities || !data.securities.data || data.securities.data.length === 0) {
+            throw new Error('Облигация не найдена. Проверьте правильность ввода ISIN.');
         }
 
         const secRows = data.securities.data[0];
@@ -94,10 +96,8 @@ async function fetchBondData() {
         const matDateStr = getSecVal('matdate');
         const offerDateStr = getSecVal('offerdate');
         
-        // 2. Запрос рыночных данных
-        const url2 = `${proxy}${encodeURIComponent(`https://moex.com{isin}.json?iss.meta=off`)}`;
-        const marketResponse = await fetch(url2);
-        const marketData = await marketResponse.json();
+        // 2. Получаем рыночные данные
+        const marketData = await fetchMoexData(`https://moex.com{isin}.json?iss.meta=off`);
         
         let pricePct = null;
         let nkd = 0;
@@ -125,10 +125,10 @@ async function fetchBondData() {
         }
 
         if (!pricePct || pricePct <= 0) {
-            throw new Error('Рыночная цена недоступна (возможно, сегодня не было сделок).');
+            throw new Error('Цена облигации временно недоступна на бирже.');
         }
 
-        // Вычисление дат
+        // Подсчет дат
         const today = new Date();
         today.setHours(0,0,0,0);
         
@@ -149,7 +149,7 @@ async function fetchBondData() {
         const daysToMat = getDaysLeft(matDate);
         const daysToOffer = getDaysLeft(offerDate);
 
-        // Простая формула доходности
+        // Расчет доходности
         function calculateSimpleYtm(days, couponVal, pricePercent, nom) {
             if (days <= 0) return 0;
             const priceMoney = (pricePercent / 100) * nom;
@@ -160,7 +160,7 @@ async function fetchBondData() {
             return ((profit / fullCost) / (days / 365) * 100).toFixed(2);
         }
 
-        // Вывод данных на экран
+        // Вывод на экран
         document.getElementById('bondName').innerText = `${name} (${isin})`;
         document.getElementById('resNominal').innerText = `${nominal} ₽`;
         document.getElementById('resPrice').innerText = `${pricePct} %`;
