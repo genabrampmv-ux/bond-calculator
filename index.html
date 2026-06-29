@@ -59,13 +59,25 @@
 </div>
 
 <script>
-// Безопасный обход блокировок через надежный публичный шлюз
-const fetchMoexData = async (url) => {
-    const response = await fetch(`https://allorigins.win{encodeURIComponent(url)}`);
-    if (!response.ok) throw new Error('Ошибка связи с сервером');
-    const wrapper = await response.json();
-    return JSON.parse(wrapper.contents);
-};
+// Глобальные контейнеры для ответов биржи
+window.moexData1 = null;
+window.moexData2 = null;
+
+function loadScript(url) {
+    return new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = url;
+        script.onload = () => {
+            script.remove();
+            resolve();
+        };
+        script.onerror = () => {
+            script.remove();
+            resolve();
+        };
+        document.body.appendChild(script);
+    });
+}
 
 async function fetchBondData() {
     const isin = document.getElementById('isinInput').value.trim().toUpperCase();
@@ -79,56 +91,52 @@ async function fetchBondData() {
     errorDiv.style.display = 'none';
     resultsDiv.style.display = 'none';
 
+    window.moexData1 = null;
+    window.moexData2 = null;
+
     try {
-        // 1. Получаем паспорт облигации
-        const data = await fetchMoexData(`https://moex.com{isin}.json?iss.meta=off`);
-        
-        if (!data || !data.securities || !data.securities.data || data.securities.data.length === 0) {
-            throw new Error('Облигация не найдена. Проверьте правильность ввода ISIN.');
+        // Используем чистый JSONP формат Мосбиржи через динамические теги script
+        await loadScript(`https://moex.com{isin}.json?iss.meta=off&iss.json=extended&callback=moexData1`);
+        await loadScript(`https://moex.com{isin}.json?iss.meta=off&iss.json=extended&callback=moexData2`);
+
+        const data = window.moexData1;
+        const marketData = window.moexData2;
+
+        if (!data || !data[1] || !data[1].securities || data[1].securities.length === 0) {
+            throw new Error('Облигация не найдена на MOEX. Проверьте буквы в ISIN.');
         }
 
-        const secRows = data.securities.data[0];
-        const secCols = data.securities.columns;
-        const getSecVal = (colName) => secRows[secCols.indexOf(colName)];
-
-        const name = getSecVal('shortname');
-        const nominal = parseFloat(getSecVal('facevalue'));
-        const matDateStr = getSecVal('matdate');
-        const offerDateStr = getSecVal('offerdate');
-        
-        // 2. Получаем рыночные данные
-        const marketData = await fetchMoexData(`https://moex.com{isin}.json?iss.meta=off`);
+        // Парсинг паспортных данных
+        const sec = data[1].securities[0];
+        const name = sec.shortname || sec.name;
+        const nominal = parseFloat(sec.facevalue);
+        const matDateStr = sec.matdate;
+        const offerDateStr = sec.offerdate;
         
         let pricePct = null;
         let nkd = 0;
         let coupon = 0;
 
-        if (marketData && marketData.securities && marketData.securities.data.length > 0) {
-            const mSecRows = marketData.securities.data[0];
-            const mSecCols = marketData.securities.columns;
-            const getMSecVal = (colName) => mSecRows[mSecCols.indexOf(colName)];
-            
-            nkd = parseFloat(getMSecVal('nextcoupon')) || parseFloat(getMSecVal('accruedint')) || 0;
-            coupon = parseFloat(getMSecVal('couponvalue')) || 0;
-        }
-
-        if (marketData && marketData.marketdata && marketData.marketdata.data.length > 0) {
-            const mDataCols = marketData.marketdata.columns;
-            const lastIdx = mDataCols.indexOf('LAST');
-            const lCurrentIdx = mDataCols.indexOf('LCURRENTPRICE');
-            const marketIdx = mDataCols.indexOf('MARKETPRICE');
-            
-            for (let row of marketData.marketdata.data) {
-                pricePct = parseFloat(row[lastIdx]) || parseFloat(row[lCurrentIdx]) || parseFloat(row[marketIdx]);
-                if (pricePct > 0) break;
+        // Парсинг рыночных данных
+        if (marketData && marketData[1]) {
+            if (marketData[1].securities && marketData[1].securities.length > 0) {
+                const mSec = marketData[1].securities[0];
+                nkd = parseFloat(mSec.nextcoupon) || parseFloat(mSec.accruedint) || 0;
+                coupon = parseFloat(mSec.couponvalue) || 0;
+            }
+            if (marketData[1].marketdata && marketData[1].marketdata.length > 0) {
+                for (let row of marketData[1].marketdata) {
+                    pricePct = parseFloat(row.LAST) || parseFloat(row.LCURRENTPRICE) || parseFloat(row.MARKETPRICE);
+                    if (pricePct > 0) break;
+                }
             }
         }
 
         if (!pricePct || pricePct <= 0) {
-            throw new Error('Цена облигации временно недоступна на бирже.');
+            throw new Error('Рыночная цена недоступна (возможно, сегодня не было сделок).');
         }
 
-        // Подсчет дат
+        // Подсчет дней
         const today = new Date();
         today.setHours(0,0,0,0);
         
@@ -149,7 +157,7 @@ async function fetchBondData() {
         const daysToMat = getDaysLeft(matDate);
         const daysToOffer = getDaysLeft(offerDate);
 
-        // Расчет доходности
+        // Расчет простой доходности
         function calculateSimpleYtm(days, couponVal, pricePercent, nom) {
             if (days <= 0) return 0;
             const priceMoney = (pricePercent / 100) * nom;
@@ -160,7 +168,7 @@ async function fetchBondData() {
             return ((profit / fullCost) / (days / 365) * 100).toFixed(2);
         }
 
-        // Вывод на экран
+        // Вывод на страницу
         document.getElementById('bondName').innerText = `${name} (${isin})`;
         document.getElementById('resNominal').innerText = `${nominal} ₽`;
         document.getElementById('resPrice').innerText = `${pricePct} %`;
