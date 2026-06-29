@@ -59,6 +59,25 @@
 </div>
 
 <script>
+// Глобальные промисы для обработки JSONP ответов от Мосбиржи
+let moexResolve1, moexResolve2;
+
+function moexCallback1(data) { if(moexResolve1) moexResolve1(data); }
+function moexCallback2(data) { if(moexResolve2) moexResolve2(data); }
+
+function fetchJsonp(url, callbackName) {
+    return new Promise((resolve) => {
+        if(callbackName === 'moexCallback1') moexResolve1 = resolve;
+        if(callbackName === 'moexCallback2') moexResolve2 = resolve;
+        
+        const script = document.createElement('script');
+        script.src = `${url}&callback=${callbackName}`;
+        script.onerror = () => resolve(null);
+        document.body.appendChild(script);
+        setTimeout(() => { script.remove(); }, 5000);
+    });
+}
+
 async function fetchBondData() {
     const isin = document.getElementById('isinInput').value.trim().toUpperCase();
     const loader = document.getElementById('loader');
@@ -72,17 +91,11 @@ async function fetchBondData() {
     resultsDiv.style.display = 'none';
 
     try {
-        // Защищенный прокси для обхода CORS ограничений в браузере телефона
-        const proxy = "https://allorigins.win";
+        // 1. Получаем паспорт облигации через JSONP
+        const data = await fetchJsonp(`https://moex.com{isin}.json?iss.meta=off`, 'moexCallback1');
         
-        // 1. Запрос общих параметров облигации
-        const url1 = encodeURIComponent(`https://moex.com{isin}.json?iss.meta=off`);
-        const response = await fetch(`${proxy}${url1}`);
-        if (!response.ok) throw new Error('Ошибка сети при запросе к MOEX');
-        const data = await response.json();
-        
-        if (!data.securities || data.securities.data.length === 0) {
-            throw new Error('Облигация с таким ISIN не найдена на MOEX. Проверьте правильность ввода.');
+        if (!data || !data.securities || data.securities.data.length === 0) {
+            throw new Error('Облигация с таким ISIN не найдена. Проверьте правильность ввода.');
         }
 
         const secRows = data.securities.data[0];
@@ -94,16 +107,14 @@ async function fetchBondData() {
         const matDateStr = getSecVal('matdate');
         const offerDateStr = getSecVal('offerdate');
         
-        // 2. Запрос рыночных цен и купонов
-        const url2 = encodeURIComponent(`https://moex.com{isin}.json?iss.meta=off`);
-        const marketResponse = await fetch(`${proxy}${url2}`);
-        const marketData = await marketResponse.json();
+        // 2. Получаем рыночные данные через JSONP
+        const marketData = await fetchJsonp(`https://moex.com{isin}.json?iss.meta=off`, 'moexCallback2');
         
         let pricePct = null;
         let nkd = 0;
         let coupon = 0;
 
-        if (marketData.securities && marketData.securities.data.length > 0) {
+        if (marketData && marketData.securities && marketData.securities.data.length > 0) {
             const mSecRows = marketData.securities.data[0];
             const mSecCols = marketData.securities.columns;
             const getMSecVal = (colName) => mSecRows[mSecCols.indexOf(colName)];
@@ -112,19 +123,24 @@ async function fetchBondData() {
             coupon = parseFloat(getMSecVal('couponvalue')) || 0;
         }
 
-        if (marketData.marketdata && marketData.marketdata.data.length > 0) {
-            const mDataRows = marketData.marketdata.data[0];
+        if (marketData && marketData.marketdata && marketData.marketdata.data.length > 0) {
+            // Ищем строку с основными торгами (Т+ или главная сессия)
             const mDataCols = marketData.marketdata.columns;
-            const getMarketVal = (colName) => mDataRows[mDataCols.indexOf(colName)];
+            const lastIdx = mDataCols.indexOf('LAST');
+            const lCurrentIdx = mDataCols.indexOf('LCURRENTPRICE');
+            const marketIdx = mDataCols.indexOf('MARKETPRICE');
             
-            pricePct = parseFloat(getMarketVal('LAST')) || parseFloat(getMarketVal('LCURRENTPRICE')) || parseFloat(getMarketVal('MARKETPRICE')) || null;
+            for (let row of marketData.marketdata.data) {
+                pricePct = parseFloat(row[lastIdx]) || parseFloat(row[lCurrentIdx]) || parseFloat(row[marketIdx]);
+                if (pricePct > 0) break;
+            }
         }
 
         if (!pricePct || pricePct <= 0) {
-            throw new Error('Не удалось получить текущую рыночную цену облигации. Возможно, сегодня по ней не было торгов.');
+            throw new Error('Не удалось получить текущую цену. Возможно, сегодня по ней не было торгов.');
         }
 
-        // Вычисление дат и дней
+        // Вычисление дат
         const today = new Date();
         today.setHours(0,0,0,0);
         
@@ -146,7 +162,7 @@ async function fetchBondData() {
         const daysToMat = getDaysLeft(matDate);
         const daysToOffer = getDaysLeft(offerDate);
 
-        // Расчет простой доходности
+        // Функция расчета простой доходности
         function calculateSimpleYtm(days, couponVal, pricePercent, nom) {
             if (days <= 0) return 0;
             const priceMoney = (pricePercent / 100) * nom;
@@ -160,7 +176,7 @@ async function fetchBondData() {
             return ytm.toFixed(2);
         }
 
-        // Отрисовка результатов в интерфейсе
+        // Вывод данных
         document.getElementById('bondName').innerText = `${name} (${isin})`;
         document.getElementById('resNominal').innerText = `${nominal} ₽`;
         document.getElementById('resPrice').innerText = `${pricePct} %`;
