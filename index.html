@@ -72,13 +72,13 @@ async function fetchBondData() {
     resultsDiv.style.display = 'none';
 
     try {
-        // Используем стабильный и быстрый CORS-прокси
-        const proxy = "https://corsproxy.io?";
+        // Переключаемся на альтернативный стабильный прокси-сервер
+        const proxy = "https://freeboard.io";
         
         // 1. Запрос параметров облигации
         const url1 = `${proxy}${encodeURIComponent(`https://moex.com{isin}.json?iss.meta=off`)}`;
         const response = await fetch(url1);
-        if (!response.ok) throw new Error('Не удалось подключиться к серверу ценных бумаг');
+        if (!response.ok) throw new Error('Не удалось подключиться к серверу ценных бумаг через шлюз');
         const data = await response.json();
         
         if (!data.securities || !data.securities.data || data.securities.data.length === 0) {
@@ -125,7 +125,7 @@ async function fetchBondData() {
         }
 
         if (!pricePct || pricePct <= 0) {
-            throw new Error('Рыночная цена недоступна (возможно, торги закрыты).');
+            throw new Error('Рыночная цена недоступна (возможно, сегодня не было сделок).');
         }
 
         // Вычисление дат
@@ -149,7 +149,7 @@ async function fetchBondData() {
         const daysToMat = getDaysLeft(matDate);
         const daysToOffer = getDaysLeft(offerDate);
 
-        // Расчет доходности
+        // Простая формула доходности
         function calculateSimpleYtm(days, couponVal, pricePercent, nom) {
             if (days <= 0) return 0;
             const priceMoney = (pricePercent / 100) * nom;
@@ -160,7 +160,7 @@ async function fetchBondData() {
             return ((profit / fullCost) / (days / 365) * 100).toFixed(2);
         }
 
-        // Заполнение HTML
+        // Вывод данных на экран
         document.getElementById('bondName').innerText = `${name} (${isin})`;
         document.getElementById('resNominal').innerText = `${nominal} ₽`;
         document.getElementById('resPrice').innerText = `${pricePct} %`;
