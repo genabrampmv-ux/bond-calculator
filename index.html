@@ -59,24 +59,6 @@
 </div>
 
 <script>
-let globalResolve = null;
-
-// Универсальная глобальная функция, которую вызовет скрипт Мосбиржи
-window.moexCallback = function(data) {
-    if (globalResolve) globalResolve(data);
-};
-
-function callMoexJsonp(url) {
-    return new Promise((resolve) => {
-        globalResolve = resolve;
-        const script = document.createElement('script');
-        script.src = url;
-        script.onerror = () => resolve(null);
-        document.body.appendChild(script);
-        setTimeout(() => { script.remove(); }, 4000);
-    });
-}
-
 async function fetchBondData() {
     const isin = document.getElementById('isinInput').value.trim().toUpperCase();
     const loader = document.getElementById('loader');
@@ -90,11 +72,17 @@ async function fetchBondData() {
     resultsDiv.style.display = 'none';
 
     try {
-        // 1. Запрашиваем общие параметры облигации (включая даты и номинал)
-        const data = await callMoexJsonp(`https://moex.com{isin}.json?iss.meta=off&callback=moexCallback`);
+        // Используем стабильный и быстрый CORS-прокси
+        const proxy = "https://corsproxy.io?";
         
-        if (!data || !data.securities || !data.securities.data || data.securities.data.length === 0) {
-            throw new Error('Облигация с таким ISIN не найдена на MOEX. Проверьте буквы.');
+        // 1. Запрос параметров облигации
+        const url1 = `${proxy}${encodeURIComponent(`https://moex.com{isin}.json?iss.meta=off`)}`;
+        const response = await fetch(url1);
+        if (!response.ok) throw new Error('Не удалось подключиться к серверу ценных бумаг');
+        const data = await response.json();
+        
+        if (!data.securities || !data.securities.data || data.securities.data.length === 0) {
+            throw new Error('Облигация не найдена на MOEX. Проверьте правильность ISIN.');
         }
 
         const secRows = data.securities.data[0];
@@ -106,8 +94,10 @@ async function fetchBondData() {
         const matDateStr = getSecVal('matdate');
         const offerDateStr = getSecVal('offerdate');
         
-        // 2. Запрашиваем рыночные котировки для поиска цены и НКД
-        const marketData = await callMoexJsonp(`https://moex.com{isin}.json?iss.meta=off&callback=moexCallback`);
+        // 2. Запрос рыночных данных
+        const url2 = `${proxy}${encodeURIComponent(`https://moex.com{isin}.json?iss.meta=off`)}`;
+        const marketResponse = await fetch(url2);
+        const marketData = await marketResponse.json();
         
         let pricePct = null;
         let nkd = 0;
@@ -135,10 +125,10 @@ async function fetchBondData() {
         }
 
         if (!pricePct || pricePct <= 0) {
-            throw new Error('Не удалось получить текущую цену. Торги по этой облигации сейчас могут быть приостановлены.');
+            throw new Error('Рыночная цена недоступна (возможно, торги закрыты).');
         }
 
-        // Подсчет дней до событий
+        // Вычисление дат
         const today = new Date();
         today.setHours(0,0,0,0);
         
@@ -153,28 +143,24 @@ async function fetchBondData() {
         
         const getDaysLeft = (targetDate) => {
             if (!targetDate) return 0;
-            const diffTime = targetDate - today;
-            return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+            return Math.max(0, Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24)));
         };
         
         const daysToMat = getDaysLeft(matDate);
         const daysToOffer = getDaysLeft(offerDate);
 
-        // Простая формула доходности
+        // Расчет доходности
         function calculateSimpleYtm(days, couponVal, pricePercent, nom) {
             if (days <= 0) return 0;
             const priceMoney = (pricePercent / 100) * nom;
             const fullCost = priceMoney + nkd; 
-            
             const estimatedRemainingCoupons = Math.ceil(days / 182); 
             const totalFutureCoupons = estimatedRemainingCoupons * couponVal;
-            
             const profit = (nom - fullCost) + totalFutureCoupons;
-            const ytm = (profit / fullCost) / (days / 365) * 100;
-            return ytm.toFixed(2);
+            return ((profit / fullCost) / (days / 365) * 100).toFixed(2);
         }
 
-        // Обновление HTML-элементов
+        // Заполнение HTML
         document.getElementById('bondName').innerText = `${name} (${isin})`;
         document.getElementById('resNominal').innerText = `${nominal} ₽`;
         document.getElementById('resPrice').innerText = `${pricePct} %`;
