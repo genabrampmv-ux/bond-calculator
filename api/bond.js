@@ -52,6 +52,48 @@ export default async function handler(req, res) {
             security[name] = row[index];
 
         });
+        // Получаем подробную информацию об облигации
+
+const detailUrl =
+`https://iss.moex.com/iss/securities/${security.secid}.json?iss.meta=off&iss.only=description,marketdata,securities`;
+
+const detailResponse = await fetch(detailUrl);
+
+const detail = await detailResponse.json();
+
+const description = {};
+
+if(detail.description){
+
+    const cols = detail.description.columns;
+    const rows = detail.description.data;
+
+    for(const row of rows){
+
+        description[row[0]] = row[2];
+
+    }
+
+}
+
+security.nominal =
+    Number(description.FACEVALUE || security.facevalue || 0);
+
+security.currency =
+    description.FACEUNIT || "RUB";
+
+security.maturity =
+    description.MATDATE || null;
+
+security.offer =
+    description.OFFERDATE || null;
+
+security.coupon =
+    Number(description.COUPONVALUE || 0);
+
+security.couponRate =
+    Number(description.COUPONPERCENT || 0);
+    
 
         const secid = security.secid;
 
@@ -109,11 +151,31 @@ export default async function handler(req, res) {
 
         return res.status(200).json({
 
-            success: true,
+    success:true,
 
-            bond
+    bond:{
 
-        });
+        name:security.name,
+
+        isin:security.isin,
+
+        secid:security.secid,
+
+        nominal:security.nominal,
+
+        currency:security.currency,
+
+        maturity:security.maturity,
+
+        offer:security.offer,
+
+        coupon:security.coupon,
+
+        couponRate:security.couponRate
+
+    }
+
+});
 
     }
 
