@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -15,7 +14,7 @@
         input:focus { border-color: #38bdf8; }
         button { padding: 12px 20px; border-radius: 8px; border: none; background: #38bdf8; color: #0f172a; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
         button:hover { background: #0ea5e9; }
-        .error { color: #f87171; margin-bottom: 15px; font-size: 14px; display: none; }
+        .error { color: #f87171; margin-bottom: 15px; font-size: 14px; display: none; line-height: 1.4; }
         .loader { color: #94a3b8; display: none; margin-bottom: 15px; }
         .results { display: none; text-align: left; background: #0f172a; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
         .results h2 { font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 8px; color: #38bdf8; }
@@ -30,7 +29,7 @@
 <div class="container">
     <h1>Доходность облигаций</h1>
     <div class="search-box">
-        <input type="text" id="isinInput" placeholder="Введите ISIN (например, RU000A1078B3)" value="RU000A1078B3">
+        <input type="text" id="isinInput" placeholder="Введите ISIN (например, RU000A109874)" value="RU000A109874">
         <button onclick="fetchBondData()">Найти</button>
     </div>
     
@@ -70,30 +69,34 @@ async function fetchBondData() {
     
     loader.style.display = 'block';
     errorDiv.style.display = 'none';
-    resultsDiv.style.style = 'none';
     resultsDiv.style.display = 'none';
 
     try {
-        // Запрос к API Мосбиржи для получения параметров облигации по ISIN
-        const response = await fetch(`https://moex.com{isin}.json?iss.meta=off`);
+        // Защищенный прокси для обхода CORS ограничений в браузере телефона
+        const proxy = "https://allorigins.win";
+        
+        // 1. Запрос общих параметров облигации
+        const url1 = encodeURIComponent(`https://moex.com{isin}.json?iss.meta=off`);
+        const response = await fetch(`${proxy}${url1}`);
+        if (!response.ok) throw new Error('Ошибка сети при запросе к MOEX');
         const data = await response.json();
         
         if (!data.securities || data.securities.data.length === 0) {
-            throw new Error('Облигация с таким ISIN не найдена на MOEX');
+            throw new Error('Облигация с таким ISIN не найдена на MOEX. Проверьте правильность ввода.');
         }
 
-        // Парсим основные паспортные данные
-        const secRows = data.securities.data;
+        const secRows = data.securities.data[0];
         const secCols = data.securities.columns;
-        const getSecVal = (colName) => secRows[0][secCols.indexOf(colName)];
+        const getSecVal = (colName) => secRows[secCols.indexOf(colName)];
 
         const name = getSecVal('shortname');
         const nominal = parseFloat(getSecVal('facevalue'));
         const matDateStr = getSecVal('matdate');
         const offerDateStr = getSecVal('offerdate');
         
-        // Запрос рыночных данных (чтобы узнать текущую цену и НКД)
-        const marketResponse = await fetch(`https://moex.com{isin}.json?iss.meta=off`);
+        // 2. Запрос рыночных цен и купонов
+        const url2 = encodeURIComponent(`https://moex.com{isin}.json?iss.meta=off`);
+        const marketResponse = await fetch(`${proxy}${url2}`);
         const marketData = await marketResponse.json();
         
         let pricePct = null;
@@ -101,48 +104,54 @@ async function fetchBondData() {
         let coupon = 0;
 
         if (marketData.securities && marketData.securities.data.length > 0) {
-            const mSecRows = marketData.securities.data;
+            const mSecRows = marketData.securities.data[0];
             const mSecCols = marketData.securities.columns;
-            const getMSecVal = (colName) => mSecRows[0][mSecCols.indexOf(colName)];
+            const getMSecVal = (colName) => mSecRows[mSecCols.indexOf(colName)];
             
             nkd = parseFloat(getMSecVal('nextcoupon')) || parseFloat(getMSecVal('accruedint')) || 0;
             coupon = parseFloat(getMSecVal('couponvalue')) || 0;
         }
 
         if (marketData.marketdata && marketData.marketdata.data.length > 0) {
-            const mDataRows = marketData.marketdata.data;
+            const mDataRows = marketData.marketdata.data[0];
             const mDataCols = marketData.marketdata.columns;
-            const getMarketVal = (colName) => mDataRows[0][mDataCols.indexOf(colName)];
+            const getMarketVal = (colName) => mDataRows[mDataCols.indexOf(colName)];
             
-            // Пробуем взять цену последней сделки или цену закрытия
             pricePct = parseFloat(getMarketVal('LAST')) || parseFloat(getMarketVal('LCURRENTPRICE')) || parseFloat(getMarketVal('MARKETPRICE')) || null;
         }
 
-        if (!pricePct) {
-            throw new Error('Не удалось получить текущую рыночную цену облигации');
+        if (!pricePct || pricePct <= 0) {
+            throw new Error('Не удалось получить текущую рыночную цену облигации. Возможно, сегодня по ней не было торгов.');
         }
 
-        // Расчет дней
+        // Вычисление дат и дней
         const today = new Date();
-        const parseDate = (dStr) => dStr ? new Date(dStr) : null;
+        today.setHours(0,0,0,0);
+        
+        const parseDate = (dStr) => {
+            if (!dStr) return null;
+            const parts = dStr.split('-');
+            return new Date(parts[0], parts[1] - 1, parts[2]);
+        };
         
         const matDate = parseDate(matDateStr);
         const offerDate = parseDate(offerDateStr);
         
-        const getDaysLeft = (targetDate) => targetDate ? Math.max(0, Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24))) : 0;
+        const getDaysLeft = (targetDate) => {
+            if (!targetDate) return 0;
+            const diffTime = targetDate - today;
+            return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+        };
         
         const daysToMat = getDaysLeft(matDate);
         const daysToOffer = getDaysLeft(offerDate);
 
-        // Функция расчета простой доходности (YTM)
-        // Формула: ((Номинал - ЦенаПокупки + ВсеКупоныЗаСрок) / ЦенаПокупки) / (ДнейДоПогашения / 365) * 100
+        // Расчет простой доходности
         function calculateSimpleYtm(days, couponVal, pricePercent, nom) {
             if (days <= 0) return 0;
             const priceMoney = (pricePercent / 100) * nom;
-            const fullCost = priceMoney + nkd; // Цена с учетом НКД
+            const fullCost = priceMoney + nkd; 
             
-            // Грубая оценка купонного дохода за оставшийся срок на основе текущего купона
-            // Предполагаем выплаты примерно раз в полгода (182 дня) для простого расчета, если точный график недоступен в одном запросе
             const estimatedRemainingCoupons = Math.ceil(days / 182); 
             const totalFutureCoupons = estimatedRemainingCoupons * couponVal;
             
@@ -151,7 +160,7 @@ async function fetchBondData() {
             return ytm.toFixed(2);
         }
 
-        // Вывод данных
+        // Отрисовка результатов в интерфейсе
         document.getElementById('bondName').innerText = `${name} (${isin})`;
         document.getElementById('resNominal').innerText = `${nominal} ₽`;
         document.getElementById('resPrice').innerText = `${pricePct} %`;
@@ -174,7 +183,7 @@ async function fetchBondData() {
 
         resultsDiv.style.display = 'block';
     } catch (err) {
-        errorDiv.innerText = err.message;
+        errorDiv.innerText = `Ошибка: ${err.message}`;
         errorDiv.style.display = 'block';
     } finally {
         loader.style.display = 'none';
