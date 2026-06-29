@@ -269,3 +269,142 @@ id="offer"
 </div>
 
 </div>
+    <div class="card">
+
+        <h3>Параметры расчёта</h3>
+
+        <div class="calculatorGrid">
+
+            <div class="field">
+
+                <label for="quantity">
+                    Количество облигаций
+                </label>
+
+                <input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    value="1">
+
+            </div>
+
+            <div class="field">
+
+                <label for="customPrice">
+                    Цена покупки (% от номинала)
+                </label>
+
+                <input
+                    id="customPrice"
+                    type="number"
+                    step="0.01"
+                    placeholder="Автоматически с MOEX">
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <h3>Результат расчёта</h3>
+
+        <div class="resultGrid">
+
+            <div class="resultItem">
+                <span>Стоимость покупки</span>
+                <strong id="purchaseCost">—</strong>
+            </div>
+
+            <div class="resultItem">
+                <span>НКД</span>
+                <strong id="purchaseACI">—</strong>
+            </div>
+
+            <div class="resultItem">
+                <span>Общая стоимость</span>
+                <strong id="totalCost">—</strong>
+            </div>
+
+            <div class="resultItem">
+                <span>Купонный доход</span>
+                <strong id="couponIncome">—</strong>
+            </div>
+
+            <div class="resultItem">
+                <span>Получишь при погашении</span>
+                <strong id="redemptionValue">—</strong>
+            </div>
+
+            <div class="resultItem">
+                <span>Чистая прибыль</span>
+                <strong class="profit" id="profit">—</strong>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <h3>Доходность</h3>
+
+        <div class="yieldGrid">
+
+            <div class="yieldCard">
+
+                <span>
+
+                    Доходность к погашению
+
+                </span>
+
+                <h2 id="ytm">
+
+                    —
+
+                </h2>
+
+            </div>
+
+            <div class="yieldCard">
+
+                <span>
+
+                    Доходность к оферте
+
+                </span>
+
+                <h2 id="yto">
+
+                    —
+
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+</main>
+
+<footer>
+
+    <p>
+
+        Bond Calculator • Powered by Moscow Exchange
+
+    </p>
+
+</footer>
+
+<script src="script.js"></script>
+
+</body>
+
+</html>
