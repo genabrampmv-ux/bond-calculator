@@ -1,202 +1,271 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Калькулятор доходности облигаций</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .container { background: #1e293b; padding: 30px; border-radius: 16px; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center; }
-        h1 { font-size: 24px; margin-bottom: 20px; color: #38bdf8; }
-        .search-box { display: flex; gap: 10px; margin-bottom: 25px; }
-        input { flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 16px; outline: none; text-transform: uppercase; }
-        input:focus { border-color: #38bdf8; }
-        button { padding: 12px 20px; border-radius: 8px; border: none; background: #38bdf8; color: #0f172a; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
-        button:hover { background: #0ea5e9; }
-        .error { color: #f87171; margin-bottom: 15px; font-size: 14px; display: none; line-height: 1.4; }
-        .loader { color: #94a3b8; display: none; margin-bottom: 15px; }
-        .results { display: none; text-align: left; background: #0f172a; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
-        .results h2 { font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 8px; color: #38bdf8; }
-        .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; }
-        .row span:first-child { color: #94a3b8; }
-        .row span:last-child { font-weight: bold; }
-        .highlight { color: #4ade80 !important; font-size: 16px; }
-    </style>
+
+    <title>Bond Calculator</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<div class="container">
-    <h1>Доходность облигаций</h1>
-    <div class="search-box">
-        <input type="text" id="isinInput" placeholder="Введите ISIN (например, RU000A109874)" value="RU000A109874">
-        <button onclick="fetchBondData()">Найти</button>
-    </div>
-    
-    <div id="loader" class="loader">Загрузка данных с MOEX...</div>
-    <div id="error" class="error"></div>
-
-    <div id="results" class="results">
-        <h2 id="bondName">Название облигации</h2>
-        <div class="row"><span>Номинал:</span><span id="resNominal">-</span></div>
-        <div class="row"><span>Текущая цена (%):</span><span id="resPrice">-</span></div>
-        <div class="row"><span>НКД:</span><span id="resNkd">-</span></div>
-        <div class="row"><span>Ближайший купон:</span><span id="resCoupon">-</span></div>
-        <div class="row"><span>Дней до погашения:</span><span id="resDaysMat">-</span></div>
-        <div class="row"><span>Дата погашения:</span><span id="resDateMat">-</span></div>
-        <div class="row style-offer"><span>Дата оферты:</span><span id="resDateOffer">-</span></div>
-        <div class="row style-offer"><span>Дней до оферты:</span><span id="resDaysOffer">-</span></div>
-        
-        <div class="row" style="margin-top: 15px; border-top: 1px dashed #334155; padding-top: 10px;">
-            <span>Доходность к погашению:</span>
-            <span id="ytmMat" class="highlight">-</span>
-        </div>
-        <div class="row style-offer">
-            <span>Доходность к оферте:</span>
-            <span id="ytmOffer" class="highlight">-</span>
-        </div>
-    </div>
+<div class="background">
+    <div class="blur blur1"></div>
+    <div class="blur blur2"></div>
+    <div class="blur blur3"></div>
 </div>
 
-<script>
-// Глобальные контейнеры для ответов биржи
-window.moexData1 = null;
-window.moexData2 = null;
+<header>
 
-function loadScript(url) {
-    return new Promise((resolve) => {
-        const script = document.createElement('script');
-        script.src = url;
-        script.onload = () => {
-            script.remove();
-            resolve();
-        };
-        script.onerror = () => {
-            script.remove();
-            resolve();
-        };
-        document.body.appendChild(script);
-    });
-}
+    <div class="logo">
 
-async function fetchBondData() {
-    const isin = document.getElementById('isinInput').value.trim().toUpperCase();
-    const loader = document.getElementById('loader');
-    const errorDiv = document.getElementById('error');
-    const resultsDiv = document.getElementById('results');
-    
-    if (!isin) return;
-    
-    loader.style.display = 'block';
-    errorDiv.style.display = 'none';
-    resultsDiv.style.display = 'none';
+        <div class="logoCircle">
+            💎
+        </div>
 
-    window.moexData1 = null;
-    window.moexData2 = null;
+        <div>
 
-    try {
-        // Используем чистый JSONP формат Мосбиржи через динамические теги script
-        await loadScript(`https://moex.com{isin}.json?iss.meta=off&iss.json=extended&callback=moexData1`);
-        await loadScript(`https://moex.com{isin}.json?iss.meta=off&iss.json=extended&callback=moexData2`);
+            <h1>Bond Calculator</h1>
 
-        const data = window.moexData1;
-        const marketData = window.moexData2;
+            <p>Калькулятор доходности облигаций</p>
 
-        if (!data || !data[1] || !data[1].securities || data[1].securities.length === 0) {
-            throw new Error('Облигация не найдена на MOEX. Проверьте буквы в ISIN.');
-        }
+        </div>
 
-        // Парсинг паспортных данных
-        const sec = data[1].securities[0];
-        const name = sec.shortname || sec.name;
-        const nominal = parseFloat(sec.facevalue);
-        const matDateStr = sec.matdate;
-        const offerDateStr = sec.offerdate;
-        
-        let pricePct = null;
-        let nkd = 0;
-        let coupon = 0;
+    </div>
 
-        // Парсинг рыночных данных
-        if (marketData && marketData[1]) {
-            if (marketData[1].securities && marketData[1].securities.length > 0) {
-                const mSec = marketData[1].securities[0];
-                nkd = parseFloat(mSec.nextcoupon) || parseFloat(mSec.accruedint) || 0;
-                coupon = parseFloat(mSec.couponvalue) || 0;
-            }
-            if (marketData[1].marketdata && marketData[1].marketdata.length > 0) {
-                for (let row of marketData[1].marketdata) {
-                    pricePct = parseFloat(row.LAST) || parseFloat(row.LCURRENTPRICE) || parseFloat(row.MARKETPRICE);
-                    if (pricePct > 0) break;
-                }
-            }
-        }
+</header>
 
-        if (!pricePct || pricePct <= 0) {
-            throw new Error('Рыночная цена недоступна (возможно, сегодня не было сделок).');
-        }
+<main>
 
-        // Подсчет дней
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        
-        const parseDate = (dStr) => {
-            if (!dStr) return null;
-            const parts = dStr.split('-');
-            return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-        };
-        
-        const matDate = parseDate(matDateStr);
-        const offerDate = parseDate(offerDateStr);
-        
-        const getDaysLeft = (targetDate) => {
-            if (!targetDate) return 0;
-            return Math.max(0, Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24)));
-        };
-        
-        const daysToMat = getDaysLeft(matDate);
-        const daysToOffer = getDaysLeft(offerDate);
+<section class="hero">
 
-        // Расчет простой доходности
-        function calculateSimpleYtm(days, couponVal, pricePercent, nom) {
-            if (days <= 0) return 0;
-            const priceMoney = (pricePercent / 100) * nom;
-            const fullCost = priceMoney + nkd; 
-            const estimatedRemainingCoupons = Math.ceil(days / 182); 
-            const totalFutureCoupons = estimatedRemainingCoupons * couponVal;
-            const profit = (nom - fullCost) + totalFutureCoupons;
-            return ((profit / fullCost) / (days / 365) * 100).toFixed(2);
-        }
+<h2>
 
-        // Вывод на страницу
-        document.getElementById('bondName').innerText = `${name} (${isin})`;
-        document.getElementById('resNominal').innerText = `${nominal} ₽`;
-        document.getElementById('resPrice').innerText = `${pricePct} %`;
-        document.getElementById('resNkd').innerText = `${nkd} ₽`;
-        document.getElementById('resCoupon').innerText = `${coupon} ₽`;
-        
-        document.getElementById('resDateMat').innerText = matDateStr || 'Нет';
-        document.getElementById('resDaysMat').innerText = daysToMat;
-        document.getElementById('ytmMat').innerText = daysToMat > 0 ? `${calculateSimpleYtm(daysToMat, coupon, pricePct, nominal)}%` : '0%';
+Найди облигацию
 
-        const offerElements = document.querySelectorAll('.style-offer');
-        if (offerDateStr && daysToOffer > 0) {
-            offerElements.forEach(el => el.style.display = 'flex');
-            document.getElementById('resDateOffer').innerText = offerDateStr;
-            document.getElementById('resDaysOffer').innerText = daysToOffer;
-            document.getElementById('ytmOffer').innerText = `${calculateSimpleYtm(daysToOffer, coupon, pricePct, nominal)}%`;
-        } else {
-            offerElements.forEach(el => el.style.display = 'none');
-        }
+</h2>
 
-        resultsDiv.style.display = 'block';
-    } catch (err) {
-        errorDiv.innerText = `Ошибка: ${err.message}`;
-        errorDiv.style.display = 'block';
-    } finally {
-        loader.style.display = 'none';
-    }
-}
-</script>
-</body>
-</html>
+<p>
+
+Введите ISIN, регистрационный номер или название
+
+</p>
+
+<div class="searchBox">
+
+<input
+
+id="searchInput"
+
+placeholder="Например RU000A107B84"
+
+autocomplete="off"
+
+>
+
+<button id="searchButton">
+
+Поиск
+
+</button>
+
+</div>
+
+<div id="loading">
+
+<div class="spinner"></div>
+
+<p>
+
+Получаем данные Московской биржи...
+
+</p>
+
+</div>
+
+</section>
+
+<section
+
+id="result"
+
+class="hidden"
+
+>
+
+<div class="card">
+
+<div class="titleRow">
+
+<div>
+
+<h2
+
+id="bondName"
+
+>
+
+—
+
+</h2>
+
+<p
+
+id="bondIsin"
+
+>
+
+—
+
+</p>
+
+</div>
+
+<div
+
+class="badge"
+
+id="bondStatus"
+
+>
+
+Активна
+
+</div>
+
+</div>
+
+<div class="grid">
+
+<div class="item">
+
+<span>
+
+Цена
+
+</span>
+
+<strong
+
+id="price"
+
+>
+
+—
+
+</strong>
+
+</div>
+
+<div class="item">
+
+<span>
+
+НКД
+
+</span>
+
+<strong
+
+id="aci"
+
+>
+
+—
+
+</strong>
+
+</div>
+
+<div class="item">
+
+<span>
+
+Номинал
+
+</span>
+
+<strong
+
+id="nominal"
+
+>
+
+—
+
+</strong>
+
+</div>
+
+<div class="item">
+
+<span>
+
+Купон
+
+</span>
+
+<strong
+
+id="coupon"
+
+>
+
+—
+
+</strong>
+
+</div>
+
+<div class="item">
+
+<span>
+
+Дата погашения
+
+</span>
+
+<strong
+
+id="maturity"
+
+>
+
+—
+
+</strong>
+
+</div>
+
+<div class="item">
+
+<span>
+
+Дата оферты
+
+</span>
+
+<strong
+
+id="offer"
+
+>
+
+—
+
+</strong>
+
+</div>
+
+</div>
+
+</div>
