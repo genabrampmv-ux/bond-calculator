@@ -657,3 +657,83 @@ footer{
     }
 
 }
+
+/* ===== Исправление мобильной версии ===== */
+
+@media (max-width:768px){
+
+header{
+    padding:16px;
+}
+
+.logo{
+    gap:12px;
+}
+
+.logoCircle{
+    width:48px;
+    height:48px;
+    font-size:24px;
+}
+
+.logo h1{
+    font-size:22px;
+}
+
+.logo p{
+    font-size:14px;
+}
+
+main{
+    padding:15px;
+}
+
+.hero{
+    max-width:100%;
+}
+
+.hero h2{
+    font-size:34px;
+    line-height:1.15;
+    margin-top:20px;
+}
+
+.hero>p{
+    font-size:16px;
+}
+
+.searchBox{
+    width:100%;
+    margin:30px auto;
+}
+
+.searchBox input{
+    width:100%;
+}
+
+.searchBox button{
+    width:100%;
+}
+
+.card{
+    width:100%;
+    overflow:hidden;
+}
+
+.grid,
+.resultGrid,
+.calculatorGrid,
+.yieldGrid{
+    grid-template-columns:1fr;
+}
+
+.item strong,
+.resultItem strong{
+    font-size:22px;
+}
+
+.yieldCard h2{
+    font-size:32px;
+}
+
+}
