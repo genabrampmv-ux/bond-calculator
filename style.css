@@ -1,24 +1,65 @@
+/* =======================================
+   Bond Calculator
+   Apple Style UI
+======================================= */
+
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
 }
 
+:root{
+
+    --bg:#070b14;
+    --bg2:#0d1220;
+
+    --glass:rgba(255,255,255,.08);
+    --glassBorder:rgba(255,255,255,.12);
+
+    --text:#ffffff;
+    --text2:#b8c1d1;
+
+    --blue:#4f8cff;
+    --cyan:#4fd9ff;
+
+    --radius:28px;
+
+}
+
 html{
+
     scroll-behavior:smooth;
+
 }
 
 body{
 
     font-family:Inter,sans-serif;
 
-    background:#070b16;
+    color:var(--text);
 
-    color:white;
+    background:
 
-    overflow-x:hidden;
+    radial-gradient(circle at 15% 20%,#1d4ed833,transparent 25%),
+
+    radial-gradient(circle at 85% 10%,#7c3aed33,transparent 30%),
+
+    radial-gradient(circle at 50% 90%,#06b6d433,transparent 30%),
+
+    linear-gradient(
+
+        180deg,
+
+        var(--bg),
+
+        var(--bg2)
+
+    );
 
     min-height:100vh;
+
+    overflow-x:hidden;
 
 }
 
@@ -28,16 +69,7 @@ body{
 
     inset:0;
 
-    overflow:hidden;
-
-    z-index:-10;
-
-    background:linear-gradient(
-        135deg,
-        #081224,
-        #0d1631,
-        #111827
-    );
+    pointer-events:none;
 
 }
 
@@ -47,60 +79,58 @@ body{
 
     border-radius:50%;
 
-    filter:blur(130px);
+    filter:blur(150px);
 
-    opacity:.45;
+    opacity:.55;
 
 }
 
 .blur1{
 
     width:420px;
-
     height:420px;
 
-    background:#0ea5e9;
+    background:#2563eb;
 
-    left:-120px;
-
-    top:-120px;
+    left:-180px;
+    top:-150px;
 
 }
 
 .blur2{
 
-    width:500px;
-
-    height:500px;
+    width:520px;
+    height:520px;
 
     background:#7c3aed;
 
-    right:-150px;
-
-    top:80px;
+    right:-180px;
+    top:-120px;
 
 }
 
 .blur3{
 
     width:450px;
-
     height:450px;
 
     background:#06b6d4;
 
-    bottom:-150px;
-
+    bottom:-180px;
     left:35%;
 
 }
+/* =======================================
+   Header
+======================================= */
 
 header{
 
-    width:100%;
-    max-width:1200px;
+    width:min(1200px,92%);
+
     margin:0 auto;
-    padding:28px;
+
+    padding:28px 0;
 
 }
 
@@ -116,96 +146,132 @@ header{
 
 .logoCircle{
 
-    width:58px;
+    width:68px;
 
-    height:58px;
+    height:68px;
 
-    border-radius:18px;
+    border-radius:22px;
 
     display:flex;
 
-    justify-content:center;
-
     align-items:center;
 
-    font-size:30px;
+    justify-content:center;
+
+    font-size:34px;
 
     background:rgba(255,255,255,.08);
 
-    backdrop-filter:blur(25px);
+    backdrop-filter:blur(40px);
 
-    border:1px solid rgba(255,255,255,.15);
+    -webkit-backdrop-filter:blur(40px);
+
+    border:1px solid rgba(255,255,255,.12);
+
+    box-shadow:
+        0 8px 30px rgba(0,0,0,.25),
+        inset 0 1px rgba(255,255,255,.15);
 
 }
 
 .logo h1{
 
-    font-size:28px;
+    font-size:44px;
 
     font-weight:800;
+
+    letter-spacing:-1px;
 
 }
 
 .logo p{
 
-    opacity:.7;
+    margin-top:6px;
 
-    margin-top:4px;
+    color:var(--text2);
+
+    font-size:18px;
 
 }
 
+/* =======================================
+   Main
+======================================= */
+
 main{
 
-    width:100%;
-    max-width:1200px;
-    margin:0 auto;
-    display:flex;
-    justify-content:center;
-    padding:20px;
+    width:min(1200px,92%);
+
+    margin:0 auto 80px;
 
 }
 
 .hero{
 
-    width:100%;
-
-    max-width:1050px;
+    text-align:center;
 
 }
 
 .hero h2{
 
-    text-align:center;
+    margin-top:80px;
 
-    font-size:52px;
+    font-size:64px;
 
     font-weight:800;
 
-    margin-top:70px;
+    letter-spacing:-2px;
 
 }
 
 .hero>p{
 
-    text-align:center;
+    margin-top:20px;
 
-    margin-top:15px;
+    font-size:22px;
 
-    opacity:.75;
+    color:var(--text2);
 
-    font-size:19px;
+    max-width:700px;
+
+    margin-left:auto;
+
+    margin-right:auto;
+
+    line-height:1.5;
 
 }
+/* =======================================
+   Search
+======================================= */
 
 .searchBox{
 
-    margin:50px auto;
+    margin:60px auto;
 
+    width:100%;
     max-width:760px;
 
     display:flex;
-
+    align-items:center;
     gap:16px;
+
+    padding:12px;
+
+    border-radius:32px;
+
+    background:rgba(255,255,255,.06);
+
+    backdrop-filter:blur(35px);
+    -webkit-backdrop-filter:blur(35px);
+
+    border:1px solid rgba(255,255,255,.10);
+
+    box-shadow:
+
+        0 30px 80px rgba(0,0,0,.35),
+
+        inset 0 1px rgba(255,255,255,.10);
 
 }
 
@@ -213,61 +279,68 @@ main{
 
     flex:1;
 
-    height:70px;
-
     border:none;
-
     outline:none;
+
+    background:transparent;
 
     color:white;
 
+    height:64px;
+
     font-size:22px;
 
-    padding:0 25px;
+    padding:0 24px;
 
-    border-radius:24px;
-
-    background:rgba(255,255,255,.08);
-
-    backdrop-filter:blur(25px);
-
-    border:1px solid rgba(255,255,255,.15);
-
-    transition:.3s;
+    font-weight:500;
 
 }
 
-.searchBox input:focus{
+.searchBox input::placeholder{
 
-    border:1px solid #38bdf8;
-
-    box-shadow:0 0 35px rgba(56,189,248,.35);
+    color:#9ca3af;
 
 }
 
 .searchBox button{
 
-    width:180px;
+    width:170px;
+
+    height:64px;
 
     border:none;
 
-    border-radius:24px;
+    border-radius:22px;
 
     cursor:pointer;
 
-    font-size:20px;
+    font-size:18px;
 
     font-weight:700;
 
     color:white;
 
-    background:linear-gradient(
+    background:
+
+    linear-gradient(
+
         135deg,
-        #2563eb,
-        #06b6d4
+
+        #4f8cff,
+
+        #36d6ff
+
     );
 
-    transition:.25s;
+    transition:
+
+        transform .25s,
+
+        box-shadow .25s;
+
+    box-shadow:
+
+        0 12px 30px rgba(79,140,255,.35);
 
 }
 
@@ -275,40 +348,67 @@ main{
 
     transform:translateY(-2px);
 
+    box-shadow:
+
+        0 18px 40px rgba(79,140,255,.45);
+
 }
 
 .searchBox button:active{
 
-    transform:scale(.98);
+    transform:scale(.97);
 
 }
+/* =======================================
+   Glass Cards
+======================================= */
+
 .card{
+
+    width:100%;
 
     margin-top:28px;
 
-    padding:28px;
+    padding:34px;
 
-    border-radius:28px;
+    border-radius:32px;
 
-    background:rgba(255,255,255,.07);
+    background:rgba(255,255,255,.06);
 
-    backdrop-filter:blur(24px);
+    backdrop-filter:blur(40px);
+    -webkit-backdrop-filter:blur(40px);
 
-    border:1px solid rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.10);
 
-    box-shadow:0 20px 60px rgba(0,0,0,.28);
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.35),
+        inset 0 1px rgba(255,255,255,.08);
 
-    animation:fadeUp .45s ease;
+    transition:
+        transform .25s,
+        box-shadow .25s;
+
+}
+
+.card:hover{
+
+    transform:translateY(-4px);
+
+    box-shadow:
+        0 30px 80px rgba(0,0,0,.40),
+        inset 0 1px rgba(255,255,255,.10);
 
 }
 
 .card h3{
 
-    font-size:24px;
+    font-size:28px;
 
-    margin-bottom:24px;
+    margin-bottom:26px;
 
     font-weight:700;
+
+    letter-spacing:-0.5px;
 
 }
 
@@ -320,21 +420,25 @@ main{
 
     align-items:flex-start;
 
-    gap:20px;
+    gap:24px;
 
 }
 
 .titleRow h2{
 
-    font-size:34px;
+    font-size:38px;
 
-    margin-bottom:6px;
+    font-weight:800;
+
+    letter-spacing:-1px;
 
 }
 
 .titleRow p{
 
-    opacity:.65;
+    margin-top:8px;
+
+    color:var(--text2);
 
 }
 
@@ -344,19 +448,20 @@ main{
 
     border-radius:999px;
 
-    background:rgba(34,197,94,.18);
-
-    border:1px solid rgba(34,197,94,.35);
+    background:rgba(34,197,94,.12);
 
     color:#86efac;
 
-    font-weight:600;
+    border:1px solid rgba(34,197,94,.25);
+
+    font-weight:700;
 
 }
+/* =======================================
+   Info Grid
+======================================= */
 
 .grid{
-
-    margin-top:28px;
 
     display:grid;
 
@@ -364,15 +469,29 @@ main{
 
     gap:18px;
 
+    margin-top:30px;
+
 }
 
 .item{
 
-    padding:18px;
+    padding:24px;
 
-    border-radius:18px;
+    border-radius:24px;
 
-    background:rgba(255,255,255,.05);
+    background:rgba(255,255,255,.04);
+
+    border:1px solid rgba(255,255,255,.06);
+
+    transition:.25s;
+
+}
+
+.item:hover{
+
+    background:rgba(255,255,255,.07);
+
+    transform:translateY(-2px);
 
 }
 
@@ -380,27 +499,37 @@ main{
 
     display:block;
 
-    opacity:.65;
-
-    margin-bottom:8px;
-
     font-size:14px;
+
+    color:var(--text2);
+
+    margin-bottom:10px;
 
 }
 
 .item strong{
 
-    font-size:24px;
+    display:block;
+
+    font-size:28px;
+
+    font-weight:700;
+
+    letter-spacing:-.5px;
 
 }
+
+/* =======================================
+   Calculator
+======================================= */
 
 .calculatorGrid{
 
     display:grid;
 
-    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
 
-    gap:20px;
+    gap:22px;
 
 }
 
@@ -408,9 +537,11 @@ main{
 
     display:block;
 
-    margin-bottom:10px;
+    margin-bottom:12px;
 
-    opacity:.8;
+    color:var(--text2);
+
+    font-size:15px;
 
 }
 
@@ -418,31 +549,39 @@ main{
 
     width:100%;
 
-    height:58px;
+    height:62px;
 
-    border-radius:16px;
+    border:none;
 
-    border:1px solid rgba(255,255,255,.12);
+    outline:none;
 
-    background:rgba(255,255,255,.05);
+    border-radius:18px;
 
-    color:#fff;
-
-    padding:0 16px;
+    padding:0 18px;
 
     font-size:18px;
 
-    outline:none;
+    color:white;
+
+    background:rgba(255,255,255,.05);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    transition:.25s;
 
 }
 
 .field input:focus{
 
-    border-color:#38bdf8;
+    border-color:#4f8cff;
 
-    box-shadow:0 0 18px rgba(56,189,248,.25);
+    box-shadow:0 0 25px rgba(79,140,255,.25);
 
 }
+
+/* =======================================
+   Results
+======================================= */
 
 .resultGrid{
 
@@ -456,11 +595,13 @@ main{
 
 .resultItem{
 
-    padding:20px;
+    padding:24px;
 
-    border-radius:18px;
+    border-radius:22px;
 
-    background:rgba(255,255,255,.05);
+    background:rgba(255,255,255,.04);
+
+    border:1px solid rgba(255,255,255,.06);
 
 }
 
@@ -468,7 +609,7 @@ main{
 
     display:block;
 
-    opacity:.7;
+    color:var(--text2);
 
     margin-bottom:10px;
 
@@ -476,9 +617,9 @@ main{
 
 .resultItem strong{
 
-    font-size:28px;
+    font-size:30px;
 
-    font-weight:700;
+    font-weight:800;
 
 }
 
@@ -487,6 +628,9 @@ main{
     color:#4ade80;
 
 }
+/* =======================================
+   Yield Cards
+======================================= */
 
 .yieldGrid{
 
@@ -494,43 +638,89 @@ main{
 
     grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
 
-    gap:20px;
+    gap:24px;
 
 }
 
 .yieldCard{
 
-    padding:28px;
+    position:relative;
 
-    border-radius:22px;
+    overflow:hidden;
 
-    text-align:center;
+    padding:34px;
 
-    background:linear-gradient(
-        145deg,
-        rgba(37,99,235,.22),
-        rgba(6,182,212,.12)
-    );
+    border-radius:28px;
 
-    border:1px solid rgba(255,255,255,.12);
+    background:
+        linear-gradient(
+            135deg,
+            rgba(79,140,255,.18),
+            rgba(54,214,255,.08)
+        );
+
+    border:1px solid rgba(255,255,255,.10);
+
+    backdrop-filter:blur(30px);
+    -webkit-backdrop-filter:blur(30px);
+
+    transition:.3s;
+
+}
+
+.yieldCard:hover{
+
+    transform:translateY(-4px);
+
+}
+
+.yieldCard::before{
+
+    content:"";
+
+    position:absolute;
+
+    width:220px;
+
+    height:220px;
+
+    right:-80px;
+
+    top:-80px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.05);
 
 }
 
 .yieldCard span{
 
-    opacity:.72;
+    position:relative;
+
+    color:var(--text2);
+
+    font-size:15px;
 
 }
 
 .yieldCard h2{
 
-    margin-top:14px;
+    position:relative;
 
-    font-size:48px;
+    margin-top:18px;
 
-    color:#67e8f9;
+    font-size:56px;
+
+    font-weight:800;
+
+    letter-spacing:-2px;
 
 }
+
+/* =======================================
+   Loading
+======================================= */
 
 .hidden{
 
@@ -542,37 +732,53 @@ main{
 
     display:none;
 
-    text-align:center;
+    flex-direction:column;
 
-    margin-top:36px;
+    align-items:center;
+
+    justify-content:center;
+
+    gap:20px;
+
+    margin:60px 0;
 
 }
 
 .spinner{
 
-    width:54px;
+    width:56px;
 
-    height:54px;
-
-    margin:auto;
+    height:56px;
 
     border-radius:50%;
 
-    border:5px solid rgba(255,255,255,.12);
+    border:5px solid rgba(255,255,255,.08);
 
-    border-top-color:#38bdf8;
+    border-top-color:#4f8cff;
 
     animation:spin 1s linear infinite;
 
 }
 
+#loading p{
+
+    color:var(--text2);
+
+    font-size:18px;
+
+}
+
 footer{
+
+    width:min(1200px,92%);
+
+    margin:60px auto 30px;
 
     text-align:center;
 
-    padding:40px 20px;
+    color:var(--text2);
 
-    opacity:.55;
+    font-size:15px;
 
 }
 
@@ -583,6 +789,221 @@ footer{
         transform:rotate(360deg);
 
     }
+
+}
+/* =======================================
+   Responsive Design
+======================================= */
+
+@media (max-width:900px){
+
+    header,
+    main,
+    footer{
+
+        width:94%;
+
+    }
+
+    .logoCircle{
+
+        width:56px;
+        height:56px;
+        font-size:28px;
+
+    }
+
+    .logo h1{
+
+        font-size:30px;
+
+    }
+
+    .logo p{
+
+        font-size:15px;
+
+    }
+
+    .hero h2{
+
+        margin-top:40px;
+
+        font-size:42px;
+
+        line-height:1.15;
+
+        letter-spacing:-1px;
+
+    }
+
+    .hero>p{
+
+        font-size:18px;
+
+    }
+
+    .searchBox{
+
+        flex-direction:column;
+
+        padding:14px;
+
+    }
+
+    .searchBox input{
+
+        width:100%;
+
+        height:60px;
+
+        font-size:18px;
+
+    }
+
+    .searchBox button{
+
+        width:100%;
+
+        height:60px;
+
+    }
+
+    .titleRow{
+
+        flex-direction:column;
+
+        gap:18px;
+
+    }
+
+    .titleRow h2{
+
+        font-size:28px;
+
+        word-break:break-word;
+
+    }
+
+    .grid,
+    .calculatorGrid,
+    .resultGrid,
+    .yieldGrid{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .yieldCard h2{
+
+        font-size:42px;
+
+    }
+
+}
+
+@media (max-width:480px){
+
+    .hero h2{
+
+        font-size:34px;
+
+    }
+
+    .hero>p{
+
+        font-size:16px;
+
+    }
+
+    .card{
+
+        padding:22px;
+
+        border-radius:24px;
+
+    }
+
+    .item,
+    .resultItem{
+
+        padding:18px;
+
+    }
+
+    .item strong,
+    .resultItem strong{
+
+        font-size:22px;
+
+    }
+
+    .yieldCard{
+
+        padding:24px;
+
+    }
+
+    .yieldCard h2{
+
+        font-size:34px;
+
+    }
+
+}
+/* =======================================
+   Apple Style Animations
+======================================= */
+
+::selection{
+
+    background:#4f8cff;
+
+    color:white;
+
+}
+
+html{
+
+    -webkit-tap-highlight-color:transparent;
+
+}
+
+button,
+input,
+.card,
+.item,
+.resultItem,
+.yieldCard{
+
+    transition:
+        all .28s cubic-bezier(.2,.8,.2,1);
+
+}
+
+button:hover{
+
+    filter:brightness(1.05);
+
+}
+
+button:active{
+
+    transform:scale(.98);
+
+}
+
+input{
+
+    -webkit-appearance:none;
+
+    appearance:none;
+
+}
+
+.card{
+
+    animation:fadeUp .5s ease;
 
 }
 
@@ -606,134 +1027,68 @@ footer{
 
 }
 
-@media(max-width:768px){
+@keyframes floatBlur{
 
-    .hero h2{
+    0%{
 
-        font-size:34px;
-
-        margin-top:30px;
+        transform:translateY(0);
 
     }
 
-    .searchBox{
+    50%{
 
-        flex-direction:column;
-
-    }
-
-    .searchBox button{
-
-        width:100%;
-
-        height:64px;
+        transform:translateY(-20px);
 
     }
 
-    .searchBox input{
+    100%{
 
-        height:64px;
-
-        font-size:18px;
-
-    }
-
-    .titleRow{
-
-        flex-direction:column;
-
-    }
-
-    .yieldCard h2{
-
-        font-size:36px;
-
-    }
-
-    .card{
-
-        padding:20px;
+        transform:translateY(0);
 
     }
 
 }
 
-/* ===== Исправление мобильной версии ===== */
+.blur1{
 
-@media (max-width:768px){
+    animation:floatBlur 10s ease-in-out infinite;
 
-header{
-    padding:16px;
 }
 
-.logo{
-    gap:12px;
+.blur2{
+
+    animation:floatBlur 13s ease-in-out infinite;
+
 }
 
-.logoCircle{
-    width:48px;
-    height:48px;
-    font-size:24px;
-}
+.blur3{
 
-.logo h1{
-    font-size:22px;
-}
+    animation:floatBlur 16s ease-in-out infinite;
 
-.logo p{
-    font-size:14px;
-}
-
-main{
-    padding:15px;
-}
-
-.hero{
-    max-width:100%;
-}
-
-.hero h2{
-    font-size:34px;
-    line-height:1.15;
-    margin-top:20px;
-}
-
-.hero>p{
-    font-size:16px;
 }
 
 .searchBox{
-    width:100%;
-    margin:30px auto;
+
+    position:sticky;
+
+    top:20px;
+
+    z-index:20;
+
 }
 
-.searchBox input{
-    width:100%;
-}
+@supports(backdrop-filter:blur(10px)){
 
-.searchBox button{
-    width:100%;
+.searchBox{
+
+    backdrop-filter:blur(35px);
+
 }
 
 .card{
-    width:100%;
-    overflow:hidden;
-}
 
-.grid,
-.resultGrid,
-.calculatorGrid,
-.yieldGrid{
-    grid-template-columns:1fr;
-}
+    backdrop-filter:blur(40px);
 
-.item strong,
-.resultItem strong{
-    font-size:22px;
-}
-
-.yieldCard h2{
-    font-size:32px;
 }
 
 }
