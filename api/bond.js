@@ -16,25 +16,24 @@ export default async function handler(req, res) {
 
     try {
 
-        // ==========================
-        // Поиск облигации
-        // ==========================
-
         const searchUrl =
             `https://iss.moex.com/iss/securities.json?q=${encodeURIComponent(query)}&iss.meta=off`;
 
         const searchResponse =
             await fetch(searchUrl);
 
+        if (!searchResponse.ok) {
+
+            throw new Error("Ошибка поиска облигации");
+
+        }
+
         const searchData =
             await searchResponse.json();
 
-        const securities =
-            searchData.securities;
-
         if (
-            !securities ||
-            securities.data.length === 0
+            !searchData.securities ||
+            searchData.securities.data.length === 0
         ) {
 
             return res.status(404).json({
@@ -49,50 +48,45 @@ export default async function handler(req, res) {
 
         const security = {};
 
-        securities.columns.forEach(
+        searchData.securities.columns.forEach(
 
             (column, index) => {
 
                 security[column] =
-                    securities.data[0][index];
+                    searchData.securities.data[0][index];
 
             }
 
         );
 
-        const secid =
-            security.secid;
-                    // ==========================
-        // Подробная информация
-        // ==========================
-
-        const detailUrl =
+        const secid = security.secid;
+                const detailUrl =
             `https://iss.moex.com/iss/securities/${secid}.json?iss.meta=off`;
 
         const detailResponse =
             await fetch(detailUrl);
 
+        if (!detailResponse.ok) {
+
+            throw new Error("Ошибка получения информации об облигации");
+
+        }
+
         const detailData =
             await detailResponse.json();
 
-        const description =
-            {};
+        const description = {};
 
         if (
             detailData.description &&
             detailData.description.data
         ) {
 
-            detailData.description.data.forEach(
+            detailData.description.data.forEach(item => {
 
-                item => {
+                description[item[0]] = item[2];
 
-                    description[item[0]] =
-                        item[2];
-
-                }
-
-            );
+            });
 
         }
 
@@ -108,97 +102,93 @@ export default async function handler(req, res) {
             secid,
 
             nominal:
-                Number(
-                    description.FACEVALUE
-                ) || 1000,
+                Number(description.FACEVALUE) || 1000,
 
             currency:
-                description.FACEUNIT ||
-                "RUB",
+                description.FACEUNIT || "RUB",
 
             maturity:
-                description.MATDATE ||
-                null,
+                description.MATDATE || null,
 
             offer:
-                description.OFFERDATE ||
-                null,
+                description.OFFERDATE || null,
 
             coupon:
-                Number(
-                    description.COUPONVALUE
-                ) || 0,
+                Number(description.COUPONVALUE) || 0,
 
             couponRate:
-                Number(
-                    description.COUPONPERCENT
-                ) || 0
+                Number(description.COUPONPERCENT) || 0,
+
+            price: 0,
+
+            aci: 0,
+
+            yieldToOffer: 0
 
         };
-                // ==========================
-        // Рыночные данные
-        // ==========================
+                try {
 
-        const marketUrl =
-            `https://iss.moex.com/iss/engines/stock/markets/bonds/securities/${secid}.json?iss.meta=off`;
+            const marketUrl =
+                `https://iss.moex.com/iss/securities/${secid}/marketdata.json?iss.meta=off`;
 
-        const marketResponse =
-            await fetch(marketUrl);
+            const marketResponse =
+                await fetch(marketUrl);
 
-        const marketData =
-            await marketResponse.json();
+            if (marketResponse.ok) {
 
-        if (
-            marketData.marketdata &&
-            marketData.marketdata.data &&
-            marketData.marketdata.data.length > 0
-        ) {
+                const marketData =
+                    await marketResponse.json();
 
-            const md = {};
+                if (
+                    marketData.marketdata &&
+                    marketData.marketdata.data &&
+                    marketData.marketdata.data.length > 0
+                ) {
 
-            marketData.marketdata.columns.forEach(
+                    const md = {};
 
-                (column, index) => {
+                    marketData.marketdata.columns.forEach(
 
-                    md[column] =
-                        marketData.marketdata.data[0][index];
+                        (column, index) => {
+
+                            md[column] =
+                                marketData.marketdata.data[0][index];
+
+                        }
+
+                    );
+
+                    bond.price =
+                        Number(
+                            md.LAST ??
+                            md.MARKETPRICE ??
+                            md.LEGALCLOSEPRICE ??
+                            0
+                        );
+
+                    bond.aci =
+                        Number(
+                            md.ACCRUEDINT ?? 0
+                        );
+
+                    bond.yieldToOffer =
+                        Number(
+                            md.YIELDTOOFFER ?? 0
+                        );
 
                 }
 
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Не удалось получить рыночные данные:",
+                error.message
             );
 
-            bond.price =
-                Number(
-                    md.LAST ||
-                    md.MARKETPRICE ||
-                    md.LEGALCLOSEPRICE ||
-                    0
-                );
-
-            bond.aci =
-                Number(
-                    md.ACCRUEDINT ||
-                    0
-                );
-
-            bond.yieldToOffer =
-                Number(
-                    md.YIELDTOOFFER ||
-                    0
-                );
-
-        } else {
-
-            bond.price = 0;
-            bond.aci = 0;
-            bond.yieldToOffer = 0;
-
         }
-                // ==========================
-        // Ответ API
-        // ==========================
-
-        return res.status(200).json({
+                return res.status(200).json({
 
             success: true,
 
@@ -206,9 +196,7 @@ export default async function handler(req, res) {
 
         });
 
-    }
-
-    catch (error) {
+    } catch (error) {
 
         console.error(error);
 
