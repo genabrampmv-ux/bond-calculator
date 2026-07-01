@@ -163,13 +163,15 @@ export default async function handler(req, res) {
 
         console.error(error);
 
-        return res.status(500).json({
+return res.status(500).json({
 
-            success: false,
+    success:false,
 
-            message: error.message
+    message:error.message,
 
-        });
+    stack:error.stack
+
+});
 
     }
 
