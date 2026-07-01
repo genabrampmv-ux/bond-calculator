@@ -113,6 +113,13 @@ bond.price =
 bond.aci =
 
     market.aci;
+    bond.nextCoupon =
+
+    market.nextCoupon;
+
+bond.couponPeriod =
+
+    market.couponPeriod;
                 return res.status(200).json({
 
             success: true,
