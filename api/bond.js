@@ -78,10 +78,13 @@ export default async function handler(req, res) {
                 description.FACEUNIT || "RUB",
 
             maturity:
-                description.MATDATE || null,
+    description.MATDATE || null,
 
-            offer:
-                description.OFFERDATE || null,
+offer:
+    null,
+
+offerType:
+    null,
 
             coupon:
                 Number(description.COUPONVALUE) || 0,
@@ -113,6 +116,11 @@ bond.price =
 bond.aci =
 
     market.aci;
+    bond.offer =
+    market.offer;
+
+bond.offerType =
+    market.offerType;
     bond.nextCoupon =
 
     market.nextCoupon;
