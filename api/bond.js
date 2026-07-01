@@ -1,3 +1,5 @@
+import { searchBond } from "../lib/moex";
+
 export default async function handler(req, res) {
 
     const query = req.query.query;
@@ -16,48 +18,7 @@ export default async function handler(req, res) {
 
     try {
 
-        const searchUrl =
-            `https://iss.moex.com/iss/securities.json?q=${encodeURIComponent(query)}&iss.meta=off`;
-
-        const searchResponse =
-            await fetch(searchUrl);
-
-        if (!searchResponse.ok) {
-
-            throw new Error("Ошибка поиска облигации");
-
-        }
-
-        const searchData =
-            await searchResponse.json();
-
-        if (
-            !searchData.securities ||
-            searchData.securities.data.length === 0
-        ) {
-
-            return res.status(404).json({
-
-                success: false,
-
-                message: "Облигация не найдена"
-
-            });
-
-        }
-
-        const security = {};
-
-        searchData.securities.columns.forEach(
-
-            (column, index) => {
-
-                security[column] =
-                    searchData.securities.data[0][index];
-
-            }
-
-        );
+        const security = await searchBond(query);
 
         const secid = security.secid;
         const board =
