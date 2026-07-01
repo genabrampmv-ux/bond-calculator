@@ -1,4 +1,10 @@
-import { searchBond } from "../lib/moex";
+import {
+
+    searchBond,
+
+    getMarketData
+
+} from "../lib/moex";
 
 export default async function handler(req, res) {
 
@@ -90,67 +96,23 @@ export default async function handler(req, res) {
             yieldToOffer: 0
 
         };
-                try {
+              const market =
 
-            const marketUrl =
-    `https://iss.moex.com/iss/engines/stock/markets/bonds/boards/${board}/securities/${secid}.json?iss.meta=off&iss.only=marketdata`;
-            const marketResponse =
-                await fetch(marketUrl);
+    await getMarketData(
 
-            if (marketResponse.ok) {
+        secid,
 
-                const marketData =
-                    await marketResponse.json();
+        board
 
-                if (
-                    marketData.marketdata &&
-                    marketData.marketdata.data &&
-                    marketData.marketdata.data.length > 0
-                ) {
+    );
 
-                    const md = {};
+bond.price =
 
-                    marketData.marketdata.columns.forEach(
+    market.price;
 
-                        (column, index) => {
+bond.aci =
 
-                            md[column] =
-                                marketData.marketdata.data[0][index];
-
-                        }
-
-                    );
-
-                    bond.price =
-                        Number(
-                            md.LAST ??
-                            md.MARKETPRICE ??
-                            md.LEGALCLOSEPRICE ??
-                            0
-                        );
-
-                    bond.aci =
-                        Number(
-                            md.ACCRUEDINT ?? 0
-                        );
-
-                    bond.yieldToOffer =
-                        Number(
-                            md.YIELDTOOFFER ?? 0
-                        );
-
-                }
-
-            }
-
-        } catch (error) {
-
-            console.error(
-                "Не удалось получить рыночные данные:",
-                error.message
-            );
-
-        }
+    market.aci;
                 return res.status(200).json({
 
             success: true,
