@@ -60,6 +60,9 @@ export default async function handler(req, res) {
         );
 
         const secid = security.secid;
+        const board =
+    security.primary_boardid ||
+    "TQCB";
                 const detailUrl =
             `https://iss.moex.com/iss/securities/${secid}.json?iss.meta=off`;
 
