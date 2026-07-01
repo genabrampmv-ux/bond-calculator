@@ -132,8 +132,7 @@ export default async function handler(req, res) {
                 try {
 
             const marketUrl =
-                `https://iss.moex.com/iss/securities/${secid}/marketdata.json?iss.meta=off`;
-
+    `https://iss.moex.com/iss/engines/stock/markets/bonds/boards/${board}/securities/${secid}.json?iss.meta=off&iss.only=marketdata`;
             const marketResponse =
                 await fetch(marketUrl);
 
