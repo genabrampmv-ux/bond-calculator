@@ -128,6 +128,18 @@ bond.offerType =
 bond.couponPeriod =
 
     market.couponPeriod;
+    
+    bond.offer =
+
+    market.offer;
+
+bond.putOptionDate =
+
+    market.putOptionDate;
+
+bond.callOptionDate =
+
+    market.callOptionDate;
                 return res.status(200).json({
 
             success: true,
